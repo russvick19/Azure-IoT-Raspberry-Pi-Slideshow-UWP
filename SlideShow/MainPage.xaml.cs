@@ -9,6 +9,7 @@ using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using System.Threading.Tasks;
 using System.Linq;
+using System.Diagnostics;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -29,7 +30,9 @@ namespace SlideShow
         CloudBlobClient blobClient;
 
         DispatcherTimer timer = new DispatcherTimer();
+        DispatcherTimer globalTimer = new DispatcherTimer();
         int change = 1;
+        bool timerIsRunning = false;
 
         string[] fileExtensions = { ".jpg", ".png", ".jpeg", ".gif", ".mp4", ".bmp", ".tiff" };
 
@@ -38,16 +41,24 @@ namespace SlideShow
             this.InitializeComponent();
         }
 
-        async private void Page_Load(object sender, RoutedEventArgs e)
+        private void Page_Load(object sender, RoutedEventArgs e)
         {
             hideCollectionShowSlideShow();
 
-            await initCollection();
+            //await initCollection(timerIsRunning);
+
+            globalTimer.Interval = TimeSpan.FromSeconds(45);
+            globalTimer.Tick += async (o, a) =>
+            {
+                await initCollection(timerIsRunning);
+            };
+
+            globalTimer.Start();
         }
 
         public void scrollThroughSlideShow()
         {
-            timer.Interval = TimeSpan.FromSeconds(5);
+            timer.Interval = TimeSpan.FromSeconds(2);
             timer.Tick += (o, a) =>
             {
                 // If we'd go out of bounds then start from the beginning
@@ -57,11 +68,14 @@ namespace SlideShow
                 {
                     change *= -1;
                 }
+                var selectedItem = flipView.SelectedItem;
 
                 flipView.SelectedIndex += change;
             };
-            timer.Start();
-        }
+
+            timerIsRunning = true;
+            timer.Start();         
+        } 
 
         private void hideCollectionShowSlideShow()
         {
@@ -72,7 +86,7 @@ namespace SlideShow
         }
 
         /// <summary>
-        ///Initializes a list of containers within the a blob. 
+        /// Initializes a list of containers within the a blob. 
         /// </summary>
         /// <returns></returns>
         async private Task initBlogClient()
@@ -95,28 +109,41 @@ namespace SlideShow
         /// for all images in that blob container.
         /// </summary>
         /// <returns></returns>
-        async private Task initCollection()
+        async private Task initCollection(bool timerFlag)
         {
             blobClient = storageAccount.CreateCloudBlobClient();
             BlobResultSegment resultSegment = null;
-            CloudBlobContainer container = blobClient.GetContainerReference("space");
+            CloudBlobContainer container = blobClient.GetContainerReference("tcs");
 
+            //refresh blobURI's
+            blobUris = new ConcurrentBag<string>();
             do
             {
-                resultSegment = await container.ListBlobsSegmentedAsync("", true, BlobListingDetails.All, 10, continuationToken, null, null);
+                resultSegment = await container.ListBlobsSegmentedAsync
+                    ("", true, BlobListingDetails.All, 10, continuationToken, null, null);
+
                 foreach (var blobItem in resultSegment.Results)
                 {
+                    //If the file is a picture then add it to the blobUri list
                     if (fileExtensions.Any(blobItem.StorageUri.PrimaryUri.ToString().Contains))
                     {
                         blobUris.Add(blobItem.StorageUri.PrimaryUri.ToString());
                     }
                 }
+
                 continuationToken = resultSegment.ContinuationToken;
             }
             while (continuationToken != null);
-            startSlideShow();
+
+            flipView.ItemsSource = blobUris;
+
+            if(timerFlag == false)
+            {
+                scrollThroughSlideShow();
+            }
         }
 
+        #region pop-up
         private void showCollectionHideSlideshow()
         {
             listView.Visibility = Visibility.Visible;
@@ -130,6 +157,7 @@ namespace SlideShow
             CloudBlobClient blobClient = storageAccount.CreateCloudBlobClient();
             CloudBlobContainer container = blobClient.GetContainerReference(collectionClicked);
             BlobResultSegment resultSegment = null;
+
             //refresh bloburis
             blobUris = new ConcurrentBag<string>();
             do
@@ -223,7 +251,7 @@ namespace SlideShow
             slideShowBlogUris = new ConcurrentBag<string>();
             await initBlogClient();
         }
-
+        #endregion
         private void Grid_PointerMoved(object sender, PointerRoutedEventArgs e)
         {
             button.Visibility = Visibility.Visible;

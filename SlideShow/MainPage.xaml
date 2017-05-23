@@ -25,11 +25,11 @@
                 </DataTemplate>
             </ListView.ItemTemplate>
         </ListView>
-        <FlipView Visibility="Collapsed" x:Name="flipView" Margin="10">
+        <FlipView Visibility="Visible" x:Name="flipView" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" >
             <FlipView.ItemTemplate>
                 <DataTemplate>
-                    <Grid>
-                        <Image Source="{Binding}" Stretch="UniformToFill"/>
+                    <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                        <Image Source="{Binding}" Stretch="Uniform"/>
                     </Grid>
                 </DataTemplate>
             </FlipView.ItemTemplate>
@@ -43,8 +43,8 @@
         <Button x:Name="pauseButton" Visibility="Collapsed" HorizontalAlignment="Left" Margin="182,598,0,0" VerticalAlignment="Top" Width="43" Click="pause_Click">
             <Image Source="/Assets/pause.png"/>
         </Button>-->
-            <Popup VerticalOffset="10" HorizontalOffset="100" x:Name="ImagePopup" LostFocus="ImagePopup_LostFocus"  IsLightDismissEnabled="True">
-                <Border BorderBrush="{StaticResource ApplicationForegroundThemeBrush}" 
+        <Popup VerticalOffset="10" HorizontalOffset="100" x:Name="ImagePopup" LostFocus="ImagePopup_LostFocus"  IsLightDismissEnabled="True">
+            <Border BorderBrush="{StaticResource ApplicationForegroundThemeBrush}" 
                 Background="{StaticResource ApplicationPageBackgroundThemeBrush}"
                 BorderThickness="1" Margin="10" Height="1000" Width="1000">
                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Top">
@@ -55,7 +55,7 @@
                                     <CheckBox Checked="CheckBox_Checked" VerticalAlignment="Top" HorizontalAlignment="Left">
                                         <Image Source="{Binding}" Stretch="UniformToFill"/>
                                     </CheckBox>
-                                </Grid>    
+                                </Grid>
                             </DataTemplate>
                         </GridView.ItemTemplate>
                     </GridView>
@@ -63,5 +63,6 @@
                 </StackPanel>
             </Border>
         </Popup>
+        <!--<Image x:Name="tatalogo" Source="/Assets/tatalogo.png" HorizontalAlignment="Left" Margin="10,594,0,0" Width="63" RenderTransformOrigin="0.47,0.034" Height="36" VerticalAlignment="Top"/>-->
     </Grid>
 </Page>

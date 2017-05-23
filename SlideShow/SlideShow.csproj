@@ -111,6 +111,7 @@
     <Content Include="Assets\menuBar.png" />
     <Content Include="Assets\pause.png" />
     <Content Include="Assets\play.png" />
+    <Content Include="Assets\tatalogo.png" />
     <Content Include="Assets\wannacry-2.jpg" />
     <Content Include="Properties\Default.rd.xml" />
     <Content Include="Assets\LockScreenLogo.scale-200.png" />
