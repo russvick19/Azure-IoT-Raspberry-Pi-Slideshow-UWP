@@ -10,6 +10,7 @@ using Microsoft.WindowsAzure.Storage.Blob;
 using System.Threading.Tasks;
 using System.Linq;
 using System.Diagnostics;
+using Windows.UI.Xaml.Media.Imaging;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -21,7 +22,7 @@ namespace SlideShow
     /// 
     public sealed partial class MainPage : Page
     {
-        private ConcurrentBag<string> blobUris = new ConcurrentBag<string>();
+        private ConcurrentBag<BitmapImage> blobUris = new ConcurrentBag<BitmapImage>();
         private ConcurrentBag<string> collection = new ConcurrentBag<string>();
         private ConcurrentBag<string> slideShowBlogUris = new ConcurrentBag<string>();
 
@@ -41,24 +42,24 @@ namespace SlideShow
             this.InitializeComponent();
         }
 
-        private void Page_Load(object sender, RoutedEventArgs e)
+        async private void Page_Load(object sender, RoutedEventArgs e)
         {
             hideCollectionShowSlideShow();
 
-            //await initCollection(timerIsRunning);
+            await initCollection();
 
-            globalTimer.Interval = TimeSpan.FromSeconds(45);
+            globalTimer.Interval = TimeSpan.FromSeconds(120);
             globalTimer.Tick += async (o, a) =>
             {
-                await initCollection(timerIsRunning);
+                await initCollection();
             };
-
+            scrollThroughSlideShow();
             globalTimer.Start();
         }
 
         public void scrollThroughSlideShow()
         {
-            timer.Interval = TimeSpan.FromSeconds(2);
+            timer.Interval = TimeSpan.FromSeconds(4);
             timer.Tick += (o, a) =>
             {
                 // If we'd go out of bounds then start from the beginning
@@ -72,8 +73,7 @@ namespace SlideShow
 
                 flipView.SelectedIndex += change;
             };
-
-            timerIsRunning = true;
+            
             timer.Start();         
         } 
 
@@ -109,14 +109,14 @@ namespace SlideShow
         /// for all images in that blob container.
         /// </summary>
         /// <returns></returns>
-        async private Task initCollection(bool timerFlag)
+        async private Task initCollection()
         {
             blobClient = storageAccount.CreateCloudBlobClient();
             BlobResultSegment resultSegment = null;
             CloudBlobContainer container = blobClient.GetContainerReference("tcs");
 
             //refresh blobURI's
-            blobUris = new ConcurrentBag<string>();
+            blobUris = new ConcurrentBag<BitmapImage>();
             do
             {
                 resultSegment = await container.ListBlobsSegmentedAsync
@@ -127,7 +127,8 @@ namespace SlideShow
                     //If the file is a picture then add it to the blobUri list
                     if (fileExtensions.Any(blobItem.StorageUri.PrimaryUri.ToString().Contains))
                     {
-                        blobUris.Add(blobItem.StorageUri.PrimaryUri.ToString());
+                        BitmapImage tempBitMap = new BitmapImage(new Uri(blobItem.StorageUri.PrimaryUri.ToString()));
+                        blobUris.Add(tempBitMap);
                     }
                 }
 
@@ -136,11 +137,6 @@ namespace SlideShow
             while (continuationToken != null);
 
             flipView.ItemsSource = blobUris;
-
-            if(timerFlag == false)
-            {
-                scrollThroughSlideShow();
-            }
         }
 
         #region pop-up
@@ -159,7 +155,7 @@ namespace SlideShow
             BlobResultSegment resultSegment = null;
 
             //refresh bloburis
-            blobUris = new ConcurrentBag<string>();
+            blobUris = new ConcurrentBag<BitmapImage>();
             do
             {
                 resultSegment = await container.ListBlobsSegmentedAsync("", true, BlobListingDetails.All, 10, continuationToken, null, null);
@@ -167,7 +163,8 @@ namespace SlideShow
                 {
                     if (fileExtensions.Any(blobItem.StorageUri.PrimaryUri.ToString().Contains))
                     {
-                        blobUris.Add(blobItem.StorageUri.PrimaryUri.ToString());
+                        BitmapImage tempBitMap = new BitmapImage(new Uri(blobItem.StorageUri.PrimaryUri.ToString()));
+                        blobUris.Add(tempBitMap);
                     }
                 }
                 continuationToken = resultSegment.ContinuationToken;
@@ -260,7 +257,6 @@ namespace SlideShow
         private void Grid_PointerExited(object sender, PointerRoutedEventArgs e)
         {
             button.Visibility = Visibility.Collapsed;
-
         }
     }
 }
