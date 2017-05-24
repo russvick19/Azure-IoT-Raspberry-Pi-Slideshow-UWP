@@ -27,7 +27,8 @@ namespace SlideShow
         private ConcurrentBag<BitmapImage> blobUris = new ConcurrentBag<BitmapImage>();
         private ConcurrentBag<string> collection = new ConcurrentBag<string>();
         private ConcurrentBag<string> slideShowBlogUris = new ConcurrentBag<string>();
-        
+        private ConcurrentBag<string> offlineStorage = new ConcurrentBag<string>();
+
         CloudStorageAccount storageAccount = CloudStorageAccount.Parse("DefaultEndpointsProtocol=https;AccountName=iotslideshowvisuals;AccountKey=yY8q5u5aCbD4RTDS5D4JAihP+0K2c3PLcQIxDwXMlK1SFrqW2tgOcxQk4TCFArKsVsi5Tp6AGH961Nyiu88zWQ==;EndpointSuffix=core.windows.net");
         BlobContinuationToken continuationToken = null;
         CloudBlobClient blobClient;
@@ -143,10 +144,8 @@ namespace SlideShow
 
                 flipView.ItemsSource = blobUris;
             }
-            else
+            else if(!NetworkInterface.GetIsNetworkAvailable() && offlineStorage.Count == 0)
             {
-                ConcurrentBag<string> offlineStorage = new ConcurrentBag<string>();
-
                 offlineStorage.Add("/StockImages/1d242f57-ce49-432b-9dbf-f804816a2fd9.jpg");
                 offlineStorage.Add("/StockImages/3b8778fa-de98-430f-b141-39b4e028fabf.jpg");
                 offlineStorage.Add("/StockImages/57239e16-d715-4f4f-8494-dca8dcef188d.jpg");
