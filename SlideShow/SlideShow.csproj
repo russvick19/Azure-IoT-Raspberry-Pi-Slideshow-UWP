@@ -121,6 +121,18 @@
     <Content Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png" />
     <Content Include="Assets\StoreLogo.png" />
     <Content Include="Assets\Wide310x150Logo.scale-200.png" />
+    <Content Include="StockImages\1d242f57-ce49-432b-9dbf-f804816a2fd9.jpg" />
+    <Content Include="StockImages\3b8778fa-de98-430f-b141-39b4e028fabf.jpg" />
+    <Content Include="StockImages\57239e16-d715-4f4f-8494-dca8dcef188d.jpg" />
+    <Content Include="StockImages\6afb2101-0f52-4de6-a562-baea8203f36c.jpg" />
+    <Content Include="StockImages\93359c7b-de59-43d0-8c29-6ad141638d74.jpg" />
+    <Content Include="StockImages\a6236973-3c4e-49d1-90c3-756b18772061.jpg" />
+    <Content Include="StockImages\ac2f3398-e37b-48e6-b27f-d50cf9d2797e.jpg" />
+    <Content Include="StockImages\b2637b18-d811-4eee-aeea-9cb82a74646d.jpg" />
+    <Content Include="StockImages\c3620362-1c80-4f67-80d9-0360f516a20f.jpg" />
+    <Content Include="StockImages\Post_May17_Google+_01.jpg" />
+    <Content Include="StockImages\SS-VII-G+.jpg" />
+    <Content Include="StockImages\TCS-Swissport-PR-G+.jpg" />
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml">

@@ -11,6 +11,8 @@ using System.Threading.Tasks;
 using System.Linq;
 using System.Diagnostics;
 using Windows.UI.Xaml.Media.Imaging;
+using System.Net.NetworkInformation;
+using System.IO;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -25,7 +27,7 @@ namespace SlideShow
         private ConcurrentBag<BitmapImage> blobUris = new ConcurrentBag<BitmapImage>();
         private ConcurrentBag<string> collection = new ConcurrentBag<string>();
         private ConcurrentBag<string> slideShowBlogUris = new ConcurrentBag<string>();
-
+        
         CloudStorageAccount storageAccount = CloudStorageAccount.Parse("DefaultEndpointsProtocol=https;AccountName=iotslideshowvisuals;AccountKey=yY8q5u5aCbD4RTDS5D4JAihP+0K2c3PLcQIxDwXMlK1SFrqW2tgOcxQk4TCFArKsVsi5Tp6AGH961Nyiu88zWQ==;EndpointSuffix=core.windows.net");
         BlobContinuationToken continuationToken = null;
         CloudBlobClient blobClient;
@@ -33,8 +35,7 @@ namespace SlideShow
         DispatcherTimer timer = new DispatcherTimer();
         DispatcherTimer globalTimer = new DispatcherTimer();
         int change = 1;
-        bool timerIsRunning = false;
-
+        
         string[] fileExtensions = { ".jpg", ".png", ".jpeg", ".gif", ".mp4", ".bmp", ".tiff" };
 
         public MainPage()
@@ -51,7 +52,10 @@ namespace SlideShow
             globalTimer.Interval = TimeSpan.FromSeconds(120);
             globalTimer.Tick += async (o, a) =>
             {
-                await initCollection();
+                if(NetworkInterface.GetIsNetworkAvailable())
+                {
+                    await initCollection();
+                }
             };
             scrollThroughSlideShow();
             globalTimer.Start();
@@ -73,7 +77,6 @@ namespace SlideShow
 
                 flipView.SelectedIndex += change;
             };
-            
             timer.Start();         
         } 
 
@@ -111,32 +114,48 @@ namespace SlideShow
         /// <returns></returns>
         async private Task initCollection()
         {
-            blobClient = storageAccount.CreateCloudBlobClient();
-            BlobResultSegment resultSegment = null;
-            CloudBlobContainer container = blobClient.GetContainerReference("tcs");
-
-            //refresh blobURI's
-            blobUris = new ConcurrentBag<BitmapImage>();
-            do
+            if (NetworkInterface.GetIsNetworkAvailable())
             {
-                resultSegment = await container.ListBlobsSegmentedAsync
-                    ("", true, BlobListingDetails.All, 10, continuationToken, null, null);
+                blobClient = storageAccount.CreateCloudBlobClient();
+                BlobResultSegment resultSegment = null;
+                CloudBlobContainer container = blobClient.GetContainerReference("tcs");
 
-                foreach (var blobItem in resultSegment.Results)
+                //refresh blobURI's
+                blobUris = new ConcurrentBag<BitmapImage>();
+                do
                 {
-                    //If the file is a picture then add it to the blobUri list
-                    if (fileExtensions.Any(blobItem.StorageUri.PrimaryUri.ToString().Contains))
+                    resultSegment = await container.ListBlobsSegmentedAsync
+                        ("", true, BlobListingDetails.All, 10, continuationToken, null, null);
+
+                    foreach (var blobItem in resultSegment.Results)
                     {
-                        BitmapImage tempBitMap = new BitmapImage(new Uri(blobItem.StorageUri.PrimaryUri.ToString()));
-                        blobUris.Add(tempBitMap);
+                        //If the file is a picture then add it to the blobUri list
+                        if (fileExtensions.Any(blobItem.StorageUri.PrimaryUri.ToString().Contains))
+                        {
+                            BitmapImage tempBitMap = new BitmapImage(new Uri(blobItem.StorageUri.PrimaryUri.ToString()));
+                            blobUris.Add(tempBitMap);
+                        }
                     }
+
+                    continuationToken = resultSegment.ContinuationToken;
                 }
+                while (continuationToken != null);
 
-                continuationToken = resultSegment.ContinuationToken;
+                flipView.ItemsSource = blobUris;
             }
-            while (continuationToken != null);
+            else
+            {
+                ConcurrentBag<string> offlineStorage = new ConcurrentBag<string>();
 
-            flipView.ItemsSource = blobUris;
+                offlineStorage.Add("/StockImages/1d242f57-ce49-432b-9dbf-f804816a2fd9.jpg");
+                offlineStorage.Add("/StockImages/3b8778fa-de98-430f-b141-39b4e028fabf.jpg");
+                offlineStorage.Add("/StockImages/57239e16-d715-4f4f-8494-dca8dcef188d.jpg");
+                offlineStorage.Add("/StockImages/6afb2101-0f52-4de6-a562-baea8203f36c.jpg");
+                offlineStorage.Add("/StockImages/93359c7b-de59-43d0-8c29-6ad141638d74.jpg");
+                offlineStorage.Add("/StockImages/Post_May17_Google+_01.jpg");
+                
+                flipView.ItemsSource = offlineStorage;
+            }
         }
 
         #region pop-up
