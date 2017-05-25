@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.Concurrent;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -9,10 +8,8 @@ using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using System.Threading.Tasks;
 using System.Linq;
-using System.Diagnostics;
 using Windows.UI.Xaml.Media.Imaging;
 using System.Net.NetworkInformation;
-using System.IO;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -34,6 +31,7 @@ namespace SlideShow
         CloudBlobClient blobClient;
 
         DispatcherTimer timer = new DispatcherTimer();
+        DispatcherTimer timer1 = new DispatcherTimer();
         DispatcherTimer globalTimer = new DispatcherTimer();
         int change = 1;
         
@@ -120,14 +118,15 @@ namespace SlideShow
                 blobClient = storageAccount.CreateCloudBlobClient();
                 BlobResultSegment resultSegment = null;
                 CloudBlobContainer container = blobClient.GetContainerReference("tcs");
-
+                int count = 0;
                 //refresh blobURI's
                 blobUris = new ConcurrentBag<BitmapImage>();
+
                 do
                 {
                     resultSegment = await container.ListBlobsSegmentedAsync
                         ("", true, BlobListingDetails.All, 10, continuationToken, null, null);
-
+                    count = resultSegment.Results.Count();
                     foreach (var blobItem in resultSegment.Results)
                     {
                         //If the file is a picture then add it to the blobUri list
@@ -143,6 +142,10 @@ namespace SlideShow
                 while (continuationToken != null);
 
                 flipView.ItemsSource = blobUris;
+                
+                //Have to preload images in the case of lost connectivity before the slide show has run through entirely. 
+                preLoadSlideShow();
+                timer1.Stop();
             }
             else if(!NetworkInterface.GetIsNetworkAvailable() && offlineStorage.Count == 0)
             {
@@ -153,8 +156,27 @@ namespace SlideShow
                 offlineStorage.Add("/StockImages/93359c7b-de59-43d0-8c29-6ad141638d74.jpg");
                 offlineStorage.Add("/StockImages/Post_May17_Google+_01.jpg");
                 
-                flipView.ItemsSource = offlineStorage;
+                flipView.ItemsSource = offlineStorage;            
             }
+        }
+
+        public void preLoadSlideShow()
+        {
+            timer1.Interval = TimeSpan.FromMilliseconds(10);
+            timer1.Tick += (o, a) =>
+            {
+                // If we'd go out of bounds then start from the beginning
+                int newIndex = flipView.SelectedIndex + change;
+
+                if (newIndex >= flipView.Items.Count || newIndex < 0)
+                {
+                    change *= -1;
+                }
+                var selectedItem = flipView.SelectedItem;
+
+                flipView.SelectedIndex += change;
+            };
+            timer1.Start();
         }
 
         #region pop-up

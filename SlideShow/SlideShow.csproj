@@ -113,6 +113,7 @@
     <Content Include="Assets\play.png" />
     <Content Include="Assets\tatalogo.png" />
     <Content Include="Assets\wannacry-2.jpg" />
+    <Content Include="Assets\XMLFile1.xml" />
     <Content Include="Properties\Default.rd.xml" />
     <Content Include="Assets\LockScreenLogo.scale-200.png" />
     <Content Include="Assets\SplashScreen.scale-200.png" />
