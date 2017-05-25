@@ -34,35 +34,19 @@
                 </DataTemplate>
             </FlipView.ItemTemplate>
         </FlipView>
-        <Button x:Name="button" Visibility="Collapsed" HorizontalAlignment="Left" Click="button_Click" VerticalAlignment="Top" Height="40" Width="40">
+        <Button x:Name="menuButton" Visibility="Collapsed" HorizontalAlignment="Left" Click="menuButton_Click" VerticalAlignment="Top" Height="40" Width="40">
             <Image Source="/Assets/menuBar.png"/>
         </Button>
-        <!--<Button x:Name="playButton" Visibility="Collapsed" HorizontalAlignment="Left" Margin="127,598,0,0" VerticalAlignment="Top" Width="50" Click="play_Click">
-            <Image Source="/Assets/play.png"/>
-        </Button>
-        <Button x:Name="pauseButton" Visibility="Collapsed" HorizontalAlignment="Left" Margin="182,598,0,0" VerticalAlignment="Top" Width="43" Click="pause_Click">
-            <Image Source="/Assets/pause.png"/>
-        </Button>-->
         <Popup VerticalOffset="10" HorizontalOffset="100" x:Name="ImagePopup" LostFocus="ImagePopup_LostFocus"  IsLightDismissEnabled="True">
             <Border BorderBrush="{StaticResource ApplicationForegroundThemeBrush}" 
                 Background="{StaticResource ApplicationPageBackgroundThemeBrush}"
                 BorderThickness="1" Margin="10" Height="1000" Width="1000">
                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Top">
-                    <GridView x:Name="popupGridView" ScrollViewer.IsVerticalRailEnabled="True">
-                        <GridView.ItemTemplate>
-                            <DataTemplate>
-                                <Grid Height="250" Width="250">
-                                    <CheckBox Checked="CheckBox_Checked" VerticalAlignment="Top" HorizontalAlignment="Left">
-                                        <Image Source="{Binding}" Stretch="UniformToFill"/>
-                                    </CheckBox>
-                                </Grid>
-                            </DataTemplate>
-                        </GridView.ItemTemplate>
-                    </GridView>
+                    <TextBox x:Name="connectionStringBox" PlaceholderText="Connection string"/>
+                    <TextBox x:Name="collectionBox" PlaceholderText="Desired Collection"/>
                     <Button Content="Start Show" Click="StartShowClicked" Height="50" Width="100" HorizontalAlignment="Center" VerticalAlignment="Bottom"/>
                 </StackPanel>
             </Border>
         </Popup>
-        <!--<Image x:Name="tatalogo" Source="/Assets/tatalogo.png" HorizontalAlignment="Left" Margin="10,594,0,0" Width="63" RenderTransformOrigin="0.47,0.034" Height="36" VerticalAlignment="Top"/>-->
     </Grid>
 </Page>

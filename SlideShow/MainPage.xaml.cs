@@ -26,20 +26,30 @@ namespace SlideShow
         private ConcurrentBag<string> slideShowBlogUris = new ConcurrentBag<string>();
         private ConcurrentBag<string> offlineStorage = new ConcurrentBag<string>();
 
-        CloudStorageAccount storageAccount = CloudStorageAccount.Parse("DefaultEndpointsProtocol=https;AccountName=iotslideshowvisuals;AccountKey=yY8q5u5aCbD4RTDS5D4JAihP+0K2c3PLcQIxDwXMlK1SFrqW2tgOcxQk4TCFArKsVsi5Tp6AGH961Nyiu88zWQ==;EndpointSuffix=core.windows.net");
-        BlobContinuationToken continuationToken = null;
-        CloudBlobClient blobClient;
+        //This will be the default connection string
+        private CloudStorageAccount storageAccount;
+        private BlobContinuationToken continuationToken = null;
+        private CloudBlobClient blobClient;
+        private CloudBlobContainer container;
 
         DispatcherTimer timer = new DispatcherTimer();
         DispatcherTimer timer1 = new DispatcherTimer();
         DispatcherTimer globalTimer = new DispatcherTimer();
+
         int change = 1;
-        
+        //Default collection name unless other wise specified in the popup
+        string collectionNameInUse = "tcs";
         string[] fileExtensions = { ".jpg", ".png", ".jpeg", ".gif", ".mp4", ".bmp", ".tiff" };
 
         public MainPage()
         {
             this.InitializeComponent();
+            storageAccount = CloudStorageAccount.Parse("DefaultEndpointsProtocol=https;AccountName=iotslideshowvisuals;AccountKey=yY8q5u5aCbD4RTDS5D4JAihP+0K2c3PLcQIxDwXMlK1SFrqW2tgOcxQk4TCFArKsVsi5Tp6AGH961Nyiu88zWQ==;EndpointSuffix=core.windows.net");
+
+            if(storageAccount == null)
+            {
+                showCollectionHideSlideshow();
+            }
         }
 
         async private void Page_Load(object sender, RoutedEventArgs e)
@@ -87,10 +97,6 @@ namespace SlideShow
             flipView.Visibility = Visibility.Visible;
         }
 
-        /// <summary>
-        /// Initializes a list of containers within the a blob. 
-        /// </summary>
-        /// <returns></returns>
         async private Task initBlogClient()
         {
             blobClient = storageAccount.CreateCloudBlobClient();
@@ -106,18 +112,13 @@ namespace SlideShow
             listView.ItemsSource = collection;
         }
 
-        /// <summary>
-        /// Initializes a specific collection in the blob storage and will automatically start slide the slide show
-        /// for all images in that blob container.
-        /// </summary>
-        /// <returns></returns>
         async private Task initCollection()
         {
             if (NetworkInterface.GetIsNetworkAvailable())
             {
                 blobClient = storageAccount.CreateCloudBlobClient();
                 BlobResultSegment resultSegment = null;
-                CloudBlobContainer container = blobClient.GetContainerReference("tcs");
+                CloudBlobContainer container = blobClient.GetContainerReference(collectionNameInUse);
                 int count = 0;
                 //refresh blobURI's
                 blobUris = new ConcurrentBag<BitmapImage>();
@@ -160,6 +161,12 @@ namespace SlideShow
             }
         }
 
+        private void menuButton_Click(object sender, RoutedEventArgs e)
+        {
+            ImagePopup.IsOpen = true;
+            showCollectionHideSlideshow();
+        }
+
         public void preLoadSlideShow()
         {
             timer1.Interval = TimeSpan.FromMilliseconds(10);
@@ -177,6 +184,46 @@ namespace SlideShow
                 flipView.SelectedIndex += change;
             };
             timer1.Start();
+        }
+
+        async private void StartShowClicked(object sender, RoutedEventArgs e)
+        {
+            if (String.IsNullOrWhiteSpace(collectionBox.Text) || String.IsNullOrWhiteSpace(connectionStringBox.Text))
+            {
+                return;
+            }
+            else
+            {
+                try
+                {
+                    storageAccount = CloudStorageAccount.Parse(connectionStringBox.Text);
+                    blobClient = storageAccount.CreateCloudBlobClient();
+                    if (null == storageAccount || null == blobClient)
+                    {
+                        connectionStringBox.Text = "";
+                        connectionStringBox.PlaceholderText = "Invalid connection string";
+                        return;
+                    }
+
+                    container = blobClient.GetContainerReference(collectionBox.Text);
+
+                    if (container == null)
+                    {
+                        collectionBox.Text = "";
+                        collectionBox.PlaceholderText = "Invalid collection specified.";
+                        return;
+                    }
+                }
+                catch
+                {
+
+                }
+            }
+
+            ImagePopup.IsOpen = false;
+            hideCollectionShowSlideShow();
+
+            await initCollection();
         }
 
         #region pop-up
@@ -210,7 +257,7 @@ namespace SlideShow
                 continuationToken = resultSegment.ContinuationToken;
             }
             while (continuationToken != null);
-            popupGridView.ItemsSource = blobUris;
+            //popupGridView.ItemsSource = blobUris;
         }
 
         private void startSlideShow()
@@ -256,13 +303,7 @@ namespace SlideShow
             timer.Stop();
         }
 
-        private void StartShowClicked(object sender, RoutedEventArgs e)
-        {
-            ImagePopup.IsOpen = false;
-            hideCollectionShowSlideShow();
-            startSlideShow();
-        }
-
+       
         private void ImagePopup_LostFocus(object sender, RoutedEventArgs e)
         {
             //showCollectionHideSlideshow();
@@ -280,23 +321,15 @@ namespace SlideShow
                 slideShowBlogUris.Add(uri);
             }
         }
-
-        async private void button_Click(object sender, RoutedEventArgs e)
-        {
-            //Go back to main menu
-            showCollectionHideSlideshow();
-            slideShowBlogUris = new ConcurrentBag<string>();
-            await initBlogClient();
-        }
         #endregion
         private void Grid_PointerMoved(object sender, PointerRoutedEventArgs e)
         {
-            button.Visibility = Visibility.Visible;
+            menuButton.Visibility = Visibility.Visible;
         }
 
         private void Grid_PointerExited(object sender, PointerRoutedEventArgs e)
         {
-            button.Visibility = Visibility.Collapsed;
+            menuButton.Visibility = Visibility.Collapsed;
         }
     }
 }
